@@ -35,7 +35,7 @@ async def main(dialog_id, output_file, n=None): # n None mean all, numder mean l
             if message.forward.from_id and isinstance(message.forward.from_id, tl.types.PeerChannel):
                 fwd = (message.forward.from_id.channel_id, message.forward.date)
             elif message.forward.from_id:
-                fwd = (message.forward.from_id.user_id, message.forward.date, message.forward.imported)
+                fwd = (message.forward.from_id.user_id, message.forward.date)
         if message.is_reply:
             rpl = await message.get_reply_message()
             if rpl:
@@ -56,9 +56,30 @@ if __name__ == "__main__":
     api_hash = password.api_hash  # getpass()
     client = TelegramClient('anon', api_id, api_hash)
     output_file = "Dan.pkl"
+    df_name = output_file[:-4] + '.csv'
     # dialog id Krgztn -1001675883387 Dan 5276022195
 
 
     with client:
-        client.loop.run_until_complete(main(dialog_id=5276022195, output_file=output_file, n=3))
+        client.loop.run_until_complete(main(dialog_id=5276022195, output_file=output_file, n=30))
         # print(client.loop.run_until_complete(get_all_dialog_id(client)))
+
+    # Put all to Pandas
+    import pandas as pd
+
+    with open(output_file, 'rb') as inp:
+        messages = pickle.load(inp)
+
+    # print(len(messages), messages[:4])
+
+    df = pd.DataFrame(messages, columns=['idmes', 'author_id', 'text', 'date', 'replay_id', 'fwd_id', 'fwd_date'])
+    df.to_csv(df_name)
+    """
+    'idmes' id of message in concrete group
+    'author_id' id of message author
+    'text' message text
+    'date' message date
+    'replay_id' if replay id from which mwssage
+    'fwd_id', 'fwd_date' - if forward message show from whom id and when original message was sended
+    """
+    
